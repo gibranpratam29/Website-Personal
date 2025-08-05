@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jadwal Sidang</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; }
+        header { background-color: #006837; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 900px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h2 { color: #333; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+        th { background-color: #007b3c; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .btn { display: inline-block; padding: 6px 12px; background-color: #007b3c; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px; }
+        .btn:hover { background-color: #005f2b; }
+        .button-group { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sistem Informasi Jadwal Sidang</h1>
+    </header>
+    <div class="container">
+        <h2>Daftar Sidang</h2>
+        <div class="button-group">
+            <a href="input_sidang.php" class="btn">Tambah Sidang</a>
+            <a href="index.html" class="btn" id="btnToday">Kembali</a>
+        </div>
+        <table id="jadwal">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nomor Perkara</th>
+                    <th>Tanggal</th>
+                    <th>Agenda</th>
+                    <th>Ruang Sidang</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tbody = document.querySelector("#jadwal tbody");
+        function loadData() {
+            fetch("get_jadwal.php")
+                .then(response => response.json())
+                .then(data => {
+                    tbody.innerHTML = "";
+                    data.forEach((item, index) => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${item.nomor}</td>
+                            <td>${item.tanggal}</td>
+                            <td>${item.agenda}</td>
+                            <td>${item.ruangan}</td>
+                            <td>
+                                <button onclick="editData(${item.id})">Edit</button>
+                                <button onclick="hapusData(${item.id})">Hapus</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(error => { console.error('Gagal memuat data:', error); });
+        }
+        loadData();
+        document.getElementById('btnToday').addEventListener('click', function() {
+            const today = new Date().toISOString().split('T')[0];
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const tanggal = row.cells[2].textContent.trim();
+                if (tanggal === today) {
+                    row.style.backgroundColor = '#ffef96';
+                    row.scrollIntoView({behavior: 'smooth', block: 'center'});
+                } else {
+                    row.style.backgroundColor = '';
+                }
+            });
+        });
+    });
+
+function hapusData(id) {
+    if (confirm("Yakin ingin menghapus data ini?")) {
+        fetch(`hapus_sidang.php?id=${id}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === "success") {
+                    alert("Data berhasil dihapus.");
+                    location.reload(); // Reload halaman untuk menampilkan data terbaru
+                } else {
+                    alert("Gagal menghapus data: " + result.message);
+                }
+            })
+            .catch(err => {
+                alert("Terjadi kesalahan saat menghapus data.");
+                console.error(err);
+            });
+    }
+}
+function editData(id) {
+    window.location.href = `input_sidang.php?id=${id}`;
+}
+    </script>
+</body>
+</html>
